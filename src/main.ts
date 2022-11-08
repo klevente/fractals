@@ -20,7 +20,7 @@ function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement) {
 
 const gl = canvas.getContext("webgl2")!;
 
-const vertexShaderSource = `#version 300 es
+const vertexShaderJuliaSource = `#version 300 es
 precision highp float;
 
 uniform vec2 cameraCenter;
@@ -43,14 +43,28 @@ out vec4 fragColor;
 
 void main() {
   vec2 z = z0;
-  for (int i = 0; i < 1000; i++) {
+  for (int i = 0; i < 100; i++) {
     z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c;
   }
   fragColor = (dot(z, z) < 100.0) ? vec4(0, 0, 0, 1) : vec4(1, 1, 1, 1);
 }`;
 
+const fragmentShaderMandelbrotSource = `#version 300 es
+precision highp float;
+
+in vec2 z0;
+out vec4 fragColor;
+
+void main() {
+  vec2 z = z0;
+  for (int i = 0; i < 100; i++) {
+    z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + z0;
+  }
+  fragColor = (dot(z, z) < 100.0) ? vec4(0, 0, 0, 1) : vec4(1, 1, 1, 1);
+}`;
+
 const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
-gl.shaderSource(vertexShader, vertexShaderSource);
+gl.shaderSource(vertexShader, vertexShaderJuliaSource);
 gl.compileShader(vertexShader);
 
 if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
