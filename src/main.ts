@@ -1,23 +1,9 @@
+import { FragmentShader, VertexShader } from "./shader";
+import { ShaderProgram } from "./shader-program";
+import { resizeCanvasToDisplaySize } from "./util";
+import { QuadRenderer } from "./quad-renderer";
+
 const canvas = document.querySelector("canvas")!;
-
-function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement) {
-  // Lookup the size the browser is displaying the canvas in CSS pixels.
-  const displayWidth  = canvas.clientWidth;
-  const displayHeight = canvas.clientHeight;
-
-  // Check if the canvas is not the same size.
-  const needResize = canvas.width  !== displayWidth ||
-    canvas.height !== displayHeight;
-
-  if (needResize) {
-    // Make the canvas the same size
-    canvas.width  = displayWidth;
-    canvas.height = displayHeight;
-  }
-
-  return needResize;
-}
-
 const gl = canvas.getContext("webgl2")!;
 
 const vertexShaderJuliaSource = `#version 300 es
@@ -34,7 +20,7 @@ void main() {
   z0 = position * cameraSize / 2.0 + cameraCenter;
 }`;
 
-const fragmentShaderSource = `#version 300 es
+const fragmentShaderJuliaSource = `#version 300 es
 precision highp float;
 
 uniform vec2 c;
@@ -63,67 +49,22 @@ void main() {
   fragColor = (dot(z, z) < 100.0) ? vec4(0, 0, 0, 1) : vec4(1, 1, 1, 1);
 }`;
 
-const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
-gl.shaderSource(vertexShader, vertexShaderJuliaSource);
-gl.compileShader(vertexShader);
+console.log(fragmentShaderMandelbrotSource);
 
-if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
-  throw new Error(`Error occurred during vertex shader compilation: ${gl.getShaderInfoLog(vertexShader)}`)
-}
-
-const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
-gl.shaderSource(fragmentShader, fragmentShaderSource);
-gl.compileShader(fragmentShader);
-
-if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-  throw new Error(`Error occurred during fragment shader compilation: ${gl.getShaderInfoLog(fragmentShader)}`)
-}
-
-const shaderProgram = gl.createProgram()!;
-gl.attachShader(shaderProgram, vertexShader);
-gl.attachShader(shaderProgram, fragmentShader);
-gl.linkProgram(shaderProgram);
-
-if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-  throw new Error(`Error occurred in linking: ${gl.getProgramInfoLog(shaderProgram)}`);
-}
-
-const positionLocation = gl.getAttribLocation(shaderProgram, "position");
-
-const vertices = new Float32Array([-1, -1, 1, -1, 1, 1, -1, 1]);
-
-const positionBuffer = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-const vao = gl.createVertexArray();
-gl.bindVertexArray(vao);
-
-gl.enableVertexAttribArray(positionLocation);
-gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
-gl.useProgram(shaderProgram);
+const vertexShader = new VertexShader(gl, vertexShaderJuliaSource);
+const fragmentShader = new FragmentShader(gl, fragmentShaderJuliaSource);
+const program = new ShaderProgram(gl, vertexShader, fragmentShader);
+const juliaRenderer = new QuadRenderer(gl, program);
+const { uniforms } = juliaRenderer;
 
 resizeCanvasToDisplaySize(gl.canvas);
 
 gl.clearColor(0, 0, 0, 1);
 gl.viewport(0, 0, canvas.width, canvas.height);
 
-const cUniform = gl.getUniformLocation(shaderProgram, "c");
-
-const cameraCenterUniform = gl.getUniformLocation(shaderProgram, "cameraCenter");
-const cameraSizeUniform = gl.getUniformLocation(shaderProgram, "cameraSize");
-
 let c = [0, 0];
 let cameraCenter = [0, 0];
 let cameraSize = 6;
-
-gl.uniform2f(cUniform, c[0], c[1]);
-gl.uniform2f(cameraCenterUniform, cameraCenter[0], cameraCenter[1]);
-gl.uniform1f(cameraSizeUniform, cameraSize);
-
-/*gl.clear(gl.COLOR_BUFFER_BIT);
-gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);*/
 
 const v = 0.0005;
 
@@ -216,6 +157,7 @@ document.onkeyup = (e) => {
 
 let tPrev = performance.now();
 (function frame() {
+  juliaRenderer.prime();
   const t = performance.now();
   const dt = t - tPrev;
   tPrev = t;
@@ -236,11 +178,10 @@ let tPrev = performance.now();
   c[0] += cLateralVelocity * dt * calculatedCameraSize;
   c[1] += cVerticalVelocity * dt * calculatedCameraSize;
 
-  gl.uniform2f(cameraCenterUniform, cameraCenter[0], cameraCenter[1]);
-  gl.uniform1f(cameraSizeUniform, calculatedCameraSize);
-  gl.uniform2f(cUniform, c[0], c[1]);
+  juliaRenderer.setUniform(uniforms.c, c);
+  juliaRenderer.setUniform(uniforms.cameraCenter, cameraCenter);
+  juliaRenderer.setUniform(uniforms.cameraSize, calculatedCameraSize);
 
-  gl.clear(gl.COLOR_BUFFER_BIT);
-  gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+  juliaRenderer.draw();
   requestAnimationFrame(frame);
 })();
