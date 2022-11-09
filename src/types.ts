@@ -1,9 +1,11 @@
-export type Attributes<P extends string> =
+export type HasPositionAttribute<P extends string> =
   P extends `${string}in ${infer _Type} position;\n${string}`
-    ? _Attributes<P, {
-      position: number,
-    }>
+    ? P
     : never;
+
+export type Attributes<P extends string> = _Attributes<P, {
+  position: number,
+}>
 type _Attributes<P extends string, AccObj> =
   P extends `${infer Head}\n${infer Tail}`
     ? _Attributes<Tail, _AddAttribute<Head, AccObj>>
@@ -16,9 +18,7 @@ type _AddAttribute<P extends string, AccObj> =
     : AccObj
   ;
 
-export type AttributeKeys<T extends string> = [T] extends [never] ?
-  never :
-  Extract<keyof Attributes<T>, string>;
+export type AttributeKeys<T extends string> = Extract<keyof Attributes<T>, string>;
 
 export type Uniforms<P extends string> = _Uniforms<P, {}>;
 type _Uniforms<P extends string, AccObj> =

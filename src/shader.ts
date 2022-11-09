@@ -1,4 +1,4 @@
-import type { AttributeKeys, UniformKeys } from "./types";
+import type { AttributeKeys, HasPositionAttribute, UniformKeys } from "./types";
 
 const UNIFORM_REGEX = /uniform \w+ (\w+);/g;
 const ATTRIBUTE_REGEX = /in \w+ (\w+);/g;
@@ -40,7 +40,7 @@ class Shader<S extends string> {
 }
 
 export class VertexShader<S extends string> extends Shader<S> {
-  constructor(gl: WebGL2RenderingContext, source: S) {
+  constructor(gl: WebGL2RenderingContext, source: HasPositionAttribute<S>) {
     super(gl, source, gl.VERTEX_SHADER);
   }
 }
