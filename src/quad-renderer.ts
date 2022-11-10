@@ -47,5 +47,13 @@ export class QuadRenderer<VS extends string, FS extends string> {
       this.gl.uniform4f(location, value[0], value[1], value[2], value[3]);
     }
   }
+
+  /*test(uniform: { type: "float" , location: WebGLUniformLocation }, value: number): void
+  test(uniform: { type: "vec2", location: WebGLUniformLocation }, value: number[]): void
+  test(uniform: { type: "float" | "vec2" | "vec3" | "vec4", location: WebGLUniformLocation }, value: number | number[]) {
+    switch (uniform.type) {
+      case "float"
+    }
+  }*/
 }
 
