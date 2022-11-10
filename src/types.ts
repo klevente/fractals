@@ -1,36 +1,39 @@
-export type HasPositionAttribute<P extends string> =
-  P extends `${string}in ${infer _Type} position;\n${string}`
-    ? P
+type ExtractStringKeys<T> = Extract<keyof T, string>;
+
+export type HasAttribute<S extends string, A extends string> =
+  S extends `${string}in ${infer _Type} ${A};\n${string}`
+    ? S
     : never;
 
-export type Attributes<P extends string> = _Attributes<P, {
+export type HasPositionAttribute<S extends string> = HasAttribute<S, "position">;
+
+export type Attributes<S extends string> = _Attributes<S, {
   position: number,
 }>
-type _Attributes<P extends string, AccObj> =
-  P extends `${infer Head}\n${infer Tail}`
+type _Attributes<S extends string, AccObj> =
+  S extends `${infer Head}\n${infer Tail}`
     ? _Attributes<Tail, _AddAttribute<Head, AccObj>>
-    : _AddAttribute<P, AccObj>
+    : _AddAttribute<S, AccObj>
   ;
 
-type _AddAttribute<P extends string, AccObj> =
-  P extends `in ${infer _Type} ${infer Value};`
+type _AddAttribute<S extends string, AccObj> =
+  S extends `in ${infer _Type} ${infer Value};`
     ? AccObj & { [K in Value]: number }
     : AccObj
   ;
 
-export type AttributeKeys<T extends string> = Extract<keyof Attributes<T>, string>;
+export type AttributeKeys<S extends string> = ExtractStringKeys<Attributes<S>>;
 
-export type Uniforms<P extends string> = _Uniforms<P, {}>;
-type _Uniforms<P extends string, AccObj> =
-  P extends `${infer Head}\n${infer Tail}`
+export type Uniforms<S extends string> = _Uniforms<S, {}>;
+type _Uniforms<S extends string, AccObj> =
+  S extends `${infer Head}\n${infer Tail}`
     ? _Uniforms<Tail, _AddUniform<Head, AccObj>>
-    : _AddUniform<P, AccObj>
+    : _AddUniform<S, AccObj>
   ;
 
-type _AddUniform<P extends string, AccObj> =
-  P extends `uniform ${infer _Type} ${infer Value};`
+type _AddUniform<S extends string, AccObj> =
+  S extends `uniform ${infer _Type} ${infer Value};`
     ? AccObj & { [K in Value]: WebGLUniformLocation }
     : AccObj
   ;
-
-export type UniformKeys<T extends string> = Extract<keyof Uniforms<T>, string>;
+export type UniformKeys<S extends string> = ExtractStringKeys<Uniforms<S>>;
