@@ -1,6 +1,6 @@
 import type { AttributeKeys, HasPositionAttribute, UniformKeys } from "./types";
 
-const UNIFORM_REGEX = /uniform \w+ (\w+);/g;
+const UNIFORM_REGEX = /uniform \w+ ([^;]*);/g;
 const ATTRIBUTE_REGEX = /in \w+ (\w+);/g;
 
 function getMatchedGroupValuesFor(regex: RegExp, str: string): string[] {
@@ -21,10 +21,13 @@ class Shader<S extends string> {
       throw new Error(`An error occurred compiling the ${Shader.getShaderTypeString(gl, shaderType)} shader:\n${gl.getShaderInfoLog(this.shaderHandle)}`);
     }
 
-    console.log(source);
-
-    this.uniforms = getMatchedGroupValuesFor(UNIFORM_REGEX, source) as UniformKeys<S>[];
+    this.uniforms = getMatchedGroupValuesFor(UNIFORM_REGEX, source)
+      .flatMap((line) => line.split(',')
+        .map((u) => u.trim())
+      ) as UniformKeys<S>[];
     this.attributes = getMatchedGroupValuesFor(ATTRIBUTE_REGEX, source) as AttributeKeys<S>[];
+
+    console.log(this.uniforms);
   }
 
   private static getShaderTypeString(gl: WebGL2RenderingContext, shaderType: GLenum): string {
