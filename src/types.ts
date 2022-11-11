@@ -47,10 +47,10 @@ type _AddUniforms<S extends string, AccObj> =
   ;
 
 type _AddUniform<S extends string, AccObj> =
-  // case where there's a space between variables: `a, b, c`
+  // case where there's a space between variables: `a, ...`
   S extends `${infer UniformHead}, ${infer UniformTail}`
     ? _AddUniform<UniformTail, _AddUniform<UniformHead, AccObj>>
-    // case where there's no space between variables; `a,b,c`
+    // case where there's no space between variables; `a,...`
     : S extends `${infer UniformHead},${infer UniformTail}`
     ? _AddUniform<UniformTail, _AddUniform<UniformHead, AccObj>>
     // case when there's just a single variable left: `a`
