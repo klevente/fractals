@@ -81,7 +81,7 @@ const pressed = {
   cRight: false,
 };
 
-document.onkeydown = (e) => {
+function handleKeyDown(e: KeyboardEvent) {
   switch (e.key) {
     case "w":
       pressed.up = true;
@@ -116,9 +116,9 @@ document.onkeydown = (e) => {
     default:
       console.log("Unknown key pressed:", e.key);
   }
-};
+}
 
-document.onkeyup = (e) => {
+function handleKeyUp(e: KeyboardEvent) {
   switch (e.key) {
     case "w":
       pressed.up = false;
@@ -154,6 +154,9 @@ document.onkeyup = (e) => {
       console.log("Unknown key pressed:", e.key);
   }
 }
+
+document.addEventListener('keydown', handleKeyDown);
+document.addEventListener('keyup', handleKeyUp);
 
 let tPrev = performance.now();
 (function frame() {
