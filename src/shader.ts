@@ -26,8 +26,6 @@ class Shader<S extends string> {
         .map((u) => u.trim())
       ) as UniformKeys<S>[];
     this.attributes = getMatchedGroupValuesFor(ATTRIBUTE_REGEX, source) as AttributeKeys<S>[];
-
-    console.log(this.uniforms);
   }
 
   private static getShaderTypeString(gl: WebGL2RenderingContext, shaderType: GLenum): string {
