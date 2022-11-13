@@ -1,6 +1,6 @@
 import { FragmentShader, VertexShader } from "../shader";
 import { ShaderProgram } from "../shader-program";
-import { QuadRenderer } from "../quad-renderer";
+import { FullScreenQuad } from "../full-screen-quad";
 import { resizeCanvasToDisplaySize } from "../util";
 
 const canvas = document.querySelector("canvas")!;
@@ -23,22 +23,86 @@ void main() {
 const fragmentShaderMandelbrotSource = `#version 300 es
 precision highp float;
 
+const int maxIterations = 100;
+
+const uint BlackAndWhite = 1u;
+const uint WhiteAndBlack = 2u;
+const uint GrayScale = 3u;
+const uint InverseGrayScale = 4u;
+const uint Hsl = 5u;
+const uint Rgb = 6u;
+
+uniform uint coloringType;
+
 in vec2 z0;
 out vec4 fragColor;
 
+float hue2rgb(float p, float q, float t) {
+  t = fract(t);
+  if (t < 1.0 / 6.0) return p + (q - p) * 6.0 * t;
+  if (t < 1.0 / 2.0) return q;
+  if (t < 2.0 / 3.0) return p + (q - p) * (2.0 / 3.0 - t) * 6.0;
+  return p;
+}
+
+vec3 hsl2rgb(float h, float s, float l) {
+  if (s == 0.0) return vec3(l, l, l);
+
+  float q = l < 0.5 ? l * (1.0 + s) : l + s - l * s;
+  float p = 2.0 * l - q;
+
+  float r = hue2rgb(p, q, h + 1.0 / 3.0);
+  float g = hue2rgb(p, q, h);
+  float b = hue2rgb(p, q, h - 1.0 / 3.0);
+
+  return vec3(r, g, b);
+}
+
+vec4 calcColor(int iterations) {
+  switch (coloringType) {
+  case BlackAndWhite: {
+    return iterations < 100 ? vec4(1, 1, 1, 1): vec4(0, 0, 0, 1);
+  }
+  case WhiteAndBlack: {
+    return iterations < 100 ? vec4(0, 0, 0, 1): vec4(1, 1, 1, 1);
+  }
+  case GrayScale: {
+    float color = float(iterations) / float(maxIterations);
+    return vec4(color, color, color, 1);
+  }
+  case InverseGrayScale: {
+    float color = 1.0 - float(iterations) / float(maxIterations);
+    return vec4(color, color, color, 1);
+  }
+  case Hsl: {
+    float color = float(iterations) / float(maxIterations);
+    vec3 rgb = hsl2rgb(color, 0.9, .5);
+    return vec4(rgb, 1);
+  }
+  case Rgb: {
+    float color = float(iterations) / float(maxIterations);
+    vec3 ambient = vec3(.3, .8, .5);
+    vec3 rgb = vec3(fract(color + ambient.x), fract(color + ambient.y), fract(color + ambient.z));
+    return vec4(rgb, 1);
+  }
+  }
+}
+
 void main() {
   vec2 z = z0;
-  for (int i = 0; i < 100; i++) {
+  int iterations = 0;
+  while (iterations < maxIterations && dot(z, z) < 4.0) {
     z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + z0;
+    iterations++;
   }
-  fragColor = (dot(z, z) < 100.0) ? vec4(0, 0, 0, 1) : vec4(1, 1, 1, 1);
+  fragColor = calcColor(iterations);
 }`;
 
 const vertexShader = new VertexShader(gl, vertexShaderMandelbrotSource);
 const fragmentShader = new FragmentShader(gl, fragmentShaderMandelbrotSource);
 const program = new ShaderProgram(gl, vertexShader, fragmentShader);
-const mandelbrotRenderer = new QuadRenderer(gl, program);
-const { uniforms } = mandelbrotRenderer;
+const mandelbrot = new FullScreenQuad(gl, program);
+const { uniforms } = mandelbrot;
 
 resizeCanvasToDisplaySize(gl.canvas);
 
@@ -114,7 +178,7 @@ document.addEventListener("keyup", handleKeyUp);
 
 let tPrev = performance.now();
 (function frame() {
-  mandelbrotRenderer.prime();
+  mandelbrot.prime();
   const t = performance.now();
   const dt = t - tPrev;
   tPrev = t;
@@ -129,10 +193,13 @@ let tPrev = performance.now();
   cameraCenter[0] += lateralVelocity * dt * calculatedCameraSize;
   cameraCenter[1] += verticalVelocity * dt * calculatedCameraSize;
 
-  mandelbrotRenderer.setUniform(uniforms.cameraCenter, cameraCenter);
-  mandelbrotRenderer.setUniform(uniforms.cameraSize, calculatedCameraSize);
+  mandelbrot.setUniform(uniforms.cameraCenter, cameraCenter);
+  mandelbrot.setUniform(uniforms.cameraSize, calculatedCameraSize);
+  mandelbrot.setUniformEnum(uniforms.coloringType, 1);
 
-  mandelbrotRenderer.draw();
+  // mandelbrot.uniforms.cameraSize.set()
+
+  mandelbrot.draw();
 
   requestAnimationFrame(frame);
 })();

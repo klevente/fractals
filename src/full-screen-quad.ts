@@ -2,7 +2,7 @@ import { ShaderProgram } from "./shader-program";
 
 const QUAD_VERTICES = new Float32Array([-1, -1, 1, -1, 1, 1, -1, 1]);
 
-export class QuadRenderer<VS extends string, FS extends string> {
+export class FullScreenQuad<VS extends string, FS extends string> {
   private readonly vao: WebGLVertexArrayObject;
 
   constructor(
@@ -46,6 +46,10 @@ export class QuadRenderer<VS extends string, FS extends string> {
     } else if (value.length === 4) {
       this.gl.uniform4f(location, value[0], value[1], value[2], value[3]);
     }
+  }
+
+  setUniformEnum(location: WebGLUniformLocation, value: number) {
+    this.gl.uniform1ui(location, value);
   }
 
   /*test(uniform: { type: "float" , location: WebGLUniformLocation }, value: number): void
