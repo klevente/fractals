@@ -1,4 +1,4 @@
-export function throwFn(e: Error): never {
+export function throwFn<E extends Error>(e: E): never {
   throw e;
 }
 
