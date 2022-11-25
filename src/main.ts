@@ -2,6 +2,7 @@ import { FragmentShader, VertexShader } from "./shader";
 import { ShaderProgram } from "./shader-program";
 import { resizeCanvasToDisplaySize } from "./util";
 import { FullScreenQuad } from "./full-screen-quad";
+import { Vec2 } from "./math";
 
 const canvas = document.querySelector("canvas")!;
 const gl = canvas.getContext("webgl2")!;
@@ -46,8 +47,8 @@ resizeCanvasToDisplaySize(gl.canvas);
 gl.clearColor(0, 0, 0, 1);
 gl.viewport(0, 0, canvas.width, canvas.height);
 
-let c = [0, 0];
-let cameraCenter = [0, 0];
+let c = new Vec2()
+let cameraCenter = new Vec2();
 let cameraSize = 6;
 
 const v = 0.0005;
@@ -142,6 +143,9 @@ function handleKeyUp(e: KeyboardEvent) {
 document.addEventListener('keydown', handleKeyDown);
 document.addEventListener('keyup', handleKeyUp);
 
+const movementVelocity = new Vec2();
+const cVelocity = new Vec2();
+
 let tPrev = performance.now();
 (function frame() {
   julia.prime();
@@ -154,20 +158,21 @@ let tPrev = performance.now();
   const calculatedCameraSize = 6 * Math.exp(-cameraSize + 6);
   // console.log(cameraSize, calculatedCameraSize);
 
-  const lateralVelocity = (pressed.left ? -v : 0) + (pressed.right ? +v : 0);
-  const verticalVelocity = (pressed.down ? -v : 0) + (pressed.up ? +v : 0);
+  movementVelocity.set(
+    (pressed.left ? -v : 0) + (pressed.right ? +v : 0),
+    (pressed.down ? -v : 0) + (pressed.up ? +v : 0)
+  );
+  cameraCenter.addScaled(dt * calculatedCameraSize, movementVelocity);
 
-  cameraCenter[0] += lateralVelocity * dt * calculatedCameraSize;
-  cameraCenter[1] += verticalVelocity * dt * calculatedCameraSize;
+  cVelocity.set(
+    (pressed.cLeft ? -v : 0) + (pressed.cRight ? +v : 0),
+    (pressed.cDown ? -v : 0) + (pressed.cUp ? +v : 0)
+  );
+  c.addScaled(dt * calculatedCameraSize, cVelocity);
 
-  const cLateralVelocity = (pressed.cLeft ? -v : 0) + (pressed.cRight ? +v : 0);
-  const cVerticalVelocity = (pressed.cDown ? -v : 0) + (pressed.cUp ? +v : 0);
-  c[0] += cLateralVelocity * dt * calculatedCameraSize;
-  c[1] += cVerticalVelocity * dt * calculatedCameraSize;
-
-  julia.setUniform(uniforms.c, c);
-  julia.setUniform(uniforms.cameraCenter, cameraCenter);
-  julia.setUniform(uniforms.cameraSize, calculatedCameraSize);
+  uniforms.c.setValue(c);
+  uniforms.cameraCenter.setValue(cameraCenter);
+  uniforms.cameraSize.setValue(calculatedCameraSize);
 
   julia.draw();
   requestAnimationFrame(frame);

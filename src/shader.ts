@@ -1,15 +1,19 @@
-import type { AttributeKeys, HasPositionAttribute, UniformKeys } from "./types";
+import type { AttributeKeys, GlType, HasPositionAttribute, UniformKeys } from "./types";
 
-const UNIFORM_REGEX = /uniform \w+ ([^;]*);/g;
+const UNIFORM_REGEX = /uniform (\w+) ([^;]*);/g;
 const ATTRIBUTE_REGEX = /in \w+ (\w+);/g;
 
 function getMatchedGroupValuesFor(regex: RegExp, str: string): string[] {
   return [...str.matchAll(regex)].map((match) => match[1]);
 }
 
+function getUniformTypeAndVariables(str: string): [string, GlType][] {
+  return [...str.matchAll(UNIFORM_REGEX)].map((match) => [match[1], match[2] as GlType]);
+}
+
 class Shader<S extends string> {
   readonly shaderHandle: WebGLShader;
-  readonly uniforms: UniformKeys<S>[];
+  readonly uniforms: UniformKeys<S>;
   readonly attributes: AttributeKeys<S>[];
 
   constructor(gl: WebGL2RenderingContext, source: S, shaderType: GLenum) {
@@ -21,10 +25,12 @@ class Shader<S extends string> {
       throw new Error(`An error occurred compiling the ${Shader.getShaderTypeString(gl, shaderType)} shader:\n${gl.getShaderInfoLog(this.shaderHandle)}`);
     }
 
-    this.uniforms = getMatchedGroupValuesFor(UNIFORM_REGEX, source)
-      .flatMap((line) => line.split(',')
-        .map((u) => u.trim())
-      ) as UniformKeys<S>[];
+    const uniformEntries = getUniformTypeAndVariables(source)
+      .flatMap(([type, vars]) =>
+        vars.split(",")
+          .map((v) => v.trim())
+          .map((v) => ([v, type as GlType])));
+    this.uniforms = Object.fromEntries(uniformEntries);
     this.attributes = getMatchedGroupValuesFor(ATTRIBUTE_REGEX, source) as AttributeKeys<S>[];
   }
 

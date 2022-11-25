@@ -33,31 +33,5 @@ export class FullScreenQuad<VS extends string, FS extends string> {
   get uniforms() {
     return this.program.uniforms;
   }
-
-  setUniform(location: WebGLUniformLocation, value: number): void;
-  setUniform(location: WebGLUniformLocation, value: number[]): void;
-  setUniform(location: WebGLUniformLocation, value: number | number[]) {
-    if (typeof value === 'number') {
-      this.gl.uniform1f(location, value);
-    } else if (value.length === 2) {
-      this.gl.uniform2f(location, value[0], value[1]);
-    } else if (value.length === 3) {
-      this.gl.uniform3f(location, value[0], value[1], value[2]);
-    } else if (value.length === 4) {
-      this.gl.uniform4f(location, value[0], value[1], value[2], value[3]);
-    }
-  }
-
-  setUniformEnum(location: WebGLUniformLocation, value: number) {
-    this.gl.uniform1ui(location, value);
-  }
-
-  /*test(uniform: { type: "float" , location: WebGLUniformLocation }, value: number): void
-  test(uniform: { type: "vec2", location: WebGLUniformLocation }, value: number[]): void
-  test(uniform: { type: "float" | "vec2" | "vec3" | "vec4", location: WebGLUniformLocation }, value: number | number[]) {
-    switch (uniform.type) {
-      case "float"
-    }
-  }*/
 }
 

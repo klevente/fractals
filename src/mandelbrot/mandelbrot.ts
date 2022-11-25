@@ -2,6 +2,7 @@ import { FragmentShader, VertexShader } from "../shader";
 import { ShaderProgram } from "../shader-program";
 import { FullScreenQuad } from "../full-screen-quad";
 import { resizeCanvasToDisplaySize } from "../util";
+import { Vec2 } from "../math";
 
 const canvas = document.querySelector("canvas")!;
 const gl = canvas.getContext("webgl2")!;
@@ -109,7 +110,7 @@ resizeCanvasToDisplaySize(gl.canvas);
 gl.clearColor(1, 0, 0, 1);
 gl.viewport(0, 0, canvas.width, canvas.height);
 
-let cameraCenter = [0, 0];
+let cameraCenter = new Vec2();
 let cameraSize = 6;
 
 const v = 0.0005;
@@ -176,6 +177,8 @@ function handleKeyUp(e: KeyboardEvent) {
 document.addEventListener("keydown", handleKeyDown);
 document.addEventListener("keyup", handleKeyUp);
 
+const movementVelocity = new Vec2();
+
 let tPrev = performance.now();
 (function frame() {
   mandelbrot.prime();
@@ -187,17 +190,15 @@ let tPrev = performance.now();
   cameraSize += zoomVelocity * dt;
   const calculatedCameraSize = 6 * Math.exp(-cameraSize + 6);
 
-  const lateralVelocity = (pressed.left ? -v : 0) + (pressed.right ? +v : 0);
-  const verticalVelocity = (pressed.down ? -v : 0) + (pressed.up ? +v : 0);
+  movementVelocity.set(
+    (pressed.left ? -v : 0) + (pressed.right ? +v : 0),
+    (pressed.down ? -v : 0) + (pressed.up ? +v : 0)
+  );
+  cameraCenter.addScaled(dt * calculatedCameraSize, movementVelocity);
 
-  cameraCenter[0] += lateralVelocity * dt * calculatedCameraSize;
-  cameraCenter[1] += verticalVelocity * dt * calculatedCameraSize;
-
-  mandelbrot.setUniform(uniforms.cameraCenter, cameraCenter);
-  mandelbrot.setUniform(uniforms.cameraSize, calculatedCameraSize);
-  mandelbrot.setUniformEnum(uniforms.coloringType, 1);
-
-  // mandelbrot.uniforms.cameraSize.set()
+  uniforms.cameraCenter.setValue(cameraCenter);
+  uniforms.cameraSize.setValue(calculatedCameraSize);
+  uniforms.coloringType.setValue(1);
 
   mandelbrot.draw();
 

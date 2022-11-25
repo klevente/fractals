@@ -1,5 +1,7 @@
 import { FragmentShader, VertexShader } from "./shader";
-import type { Attributes, Uniforms } from "./types";
+import type { Attributes, GlType, Uniforms } from "./types";
+import { UnreachableCaseError } from "./util";
+import { Mat4, Vec2, Vec3, Vec4 } from "./math";
 
 export class ShaderProgram<VS extends string, FS extends string> {
   readonly programHandle: WebGLProgram;
@@ -8,7 +10,7 @@ export class ShaderProgram<VS extends string, FS extends string> {
   readonly uniforms: Uniforms<VS> & Uniforms<FS>;
 
   constructor(
-    gl: WebGL2RenderingContext,
+    private readonly gl: WebGL2RenderingContext,
     vertexShader: VertexShader<VS>,
     fragmentShader: FragmentShader<FS>,
   ) {
@@ -30,12 +32,41 @@ export class ShaderProgram<VS extends string, FS extends string> {
       return [attribute, attributeLocation];
     })) as Attributes<VS>;
 
-    this.uniforms = Object.fromEntries([...vertexShader.uniforms, ...fragmentShader.uniforms].map((uniform) => {
-      const uniformLocation = gl.getUniformLocation(this.programHandle, uniform);
-      if (!uniformLocation) {
-        throw new Error(`Unable to find uniform named ${uniform} in program!`);
+    const mapping = Object.entries({
+      ...vertexShader.uniforms,
+      ...fragmentShader.uniforms,
+    }).map(([uniformName, uniformType]) => {
+      const location = gl.getUniformLocation(this.programHandle, uniformName);
+      if (!location) {
+        throw new Error(`Unable to find uniform named ${uniformName} in program!`);
       }
-      return [uniform, uniformLocation];
-    })) as Uniforms<VS> & Uniforms<FS>;
+      return [uniformName, {
+        location,
+        type: uniformType,
+        setValue: this.getSetter(uniformType as GlType, location),
+      }];
+    });
+    this.uniforms = Object.fromEntries(mapping);
+  }
+
+  private getSetter(type: GlType, location: WebGLUniformLocation) {
+    switch (type) {
+      case "int":
+        return (value: number) => this.gl.uniform1i(location, value);
+      case "uint":
+        return (value: number) => this.gl.uniform1ui(location, value);
+      case "float":
+        return (value: number) => this.gl.uniform1f(location, value);
+      case "vec2":
+        return (value: Vec2) => this.gl.uniform2fv(location, value.data);
+      case "vec3":
+        return (value: Vec3) => this.gl.uniform3fv(location, value.data);
+      case "vec4":
+        return (value: Vec4) => this.gl.uniform4fv(location, value.data);
+      case "mat4":
+        return (value: Mat4) => this.gl.uniformMatrix4fv(location, false, value.data);
+      default:
+        throw new UnreachableCaseError(type);
+    }
   }
 }
