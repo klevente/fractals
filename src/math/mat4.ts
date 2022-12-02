@@ -46,6 +46,16 @@ export class Mat4 {
     return this;
   }
 
+  reset(): Mat4 {
+    this.setValues(
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1,
+    );
+    return this;
+  }
+
   mul(rhs: Mat4): Mat4 {
     const m00 = this.data[0];
     const m01 = this.data[4];
