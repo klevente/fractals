@@ -1,27 +1,52 @@
 import { Mat4, Vec3 } from "./math";
 
+type PerspectiveCameraParams = {
+  position?: Vec3,
+  ahead?: Vec3,
+  right?: Vec3,
+  up?: Vec3,
+  fov?: number,
+  aspectRatio?: number,
+  nearPlane?: number,
+  farPlane?: number,
+};
+
 export class PerspectiveCamera {
   // private static readonly worldUp = new Vec3(0, 1, 0);
-
-  private fov = 1;
-  private aspectRatio = 1;
-  private nearPlane = 0.1;
-  private farPlane = 1000;
 
   readonly position: Vec3;
   readonly ahead: Vec3;
   readonly right: Vec3;
   readonly up: Vec3;
 
+  private readonly fov;
+  private readonly aspectRatio;
+  private readonly nearPlane;
+  private readonly farPlane;
+
   readonly viewMatrix: Mat4;
   readonly projMatrix: Mat4;
   readonly viewProjMatrix: Mat4;
 
-  constructor() {
-    this.position = new Vec3(0, 0, 3);
-    this.ahead = new Vec3(0, 0, -1);
-    this.right = new Vec3(1, 0, 0);
-    this.up = new Vec3(0, 1, 0);
+  constructor(params?: PerspectiveCameraParams) {
+    const {
+      position = new Vec3(0, 0, 0),
+      ahead = new Vec3(0, 0, -1),
+      right = new Vec3(1, 0, 0),
+      up = new Vec3(0, 1, 0),
+      fov = 1,
+      aspectRatio = 1,
+      nearPlane = 0.1,
+      farPlane = 1000,
+    } = params ?? {};
+    this.position = position;
+    this.ahead = ahead;
+    this.right = right;
+    this.up = up;
+    this.fov = fov;
+    this.aspectRatio = aspectRatio;
+    this.nearPlane = nearPlane;
+    this.farPlane = farPlane;
     this.viewMatrix = Mat4.identity();
     this.projMatrix = Mat4.identity();
     this.viewProjMatrix = Mat4.identity();

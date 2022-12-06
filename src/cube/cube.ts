@@ -3,7 +3,7 @@ import { ShaderProgram } from "../shader-program";
 import { CubeGeometry } from "../cube-geometry";
 import { resizeCanvasToDisplaySize } from "../util";
 import { PerspectiveCamera } from "../perspective-camera";
-import { Mat4 } from "../math";
+import { Mat4, Vec3 } from "../math";
 
 const canvas = document.querySelector("canvas")!;
 const gl = canvas.getContext("webgl2")!;
@@ -35,7 +35,9 @@ const program = new ShaderProgram(gl, vertexShader, fragmentShader);
 const cube = new CubeGeometry(gl, program);
 const { uniforms } = cube;
 
-const camera = new PerspectiveCamera();
+const camera = new PerspectiveCamera({
+  position: new Vec3(0, 0, 3),
+});
 
 resizeCanvasToDisplaySize(gl.canvas);
 
