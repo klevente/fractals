@@ -1,4 +1,5 @@
 import { Mat4, Vec2, Vec3, Vec4 } from "./math";
+import { Texture2D } from "./texture2d";
 
 type ExtractStringKeys<T> = Extract<keyof T, string>;
 
@@ -12,7 +13,7 @@ type TrimEnd<X> = X extends `${infer Y} `
 
 type Trim<X> = TrimStart<TrimEnd<X>>;*/
 
-export type GlType = "int" | "uint" | "float" | "vec2" | "vec3" | "vec4" | "mat4";
+export type GlType = "int" | "uint" | "float" | "vec2" | "vec3" | "vec4" | "mat4" | "sampler2D";
 
 export type JsType<Type extends GlType> = Type extends "int" | "uint" | "float"
   ? number
@@ -24,6 +25,8 @@ export type JsType<Type extends GlType> = Type extends "int" | "uint" | "float"
   ? Vec4
   : Type extends "mat4"
   ? Mat4
+  : Type extends "sampler2D"
+  ? Texture2D
   : never;
 
 // checks whether a shader contains a declared attribute named `A`

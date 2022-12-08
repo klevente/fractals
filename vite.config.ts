@@ -14,6 +14,7 @@ export default defineConfig({
         main: resolve(root, "index.html"),
         mandelbrot: resolve(root, "mandelbrot", "index.html"),
         cube: resolve(root, "cube", "index.html"),
+        terrain: resolve(root, "terrain", "index.html"),
       },
     },
   },

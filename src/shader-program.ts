@@ -2,6 +2,7 @@ import { FragmentShader, VertexShader } from "./shader";
 import type { Attributes, GlType, Uniforms } from "./types";
 import { UnreachableCaseError } from "./util";
 import { Mat4, Vec2, Vec3, Vec4 } from "./math";
+import { Texture2D } from "./texture2d";
 
 export class ShaderProgram<VS extends string, FS extends string> {
   readonly programHandle: WebGLProgram;
@@ -65,6 +66,8 @@ export class ShaderProgram<VS extends string, FS extends string> {
         return (value: Vec4) => this.gl.uniform4fv(location, value.data);
       case "mat4":
         return (value: Mat4) => this.gl.uniformMatrix4fv(location, false, value.data);
+      case "sampler2D":
+        return (value: Texture2D) => value.commit(location);
       default:
         throw new UnreachableCaseError(type);
     }
